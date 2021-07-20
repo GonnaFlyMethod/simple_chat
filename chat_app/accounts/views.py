@@ -22,6 +22,9 @@ class SignUpView(View):
 		if sign_up_form.is_valid():
 			sign_up_form.save()
 
+		context = {'sign_up_form': sign_up_form}
+		return render(request, 'accounts/sign_up.html', context)
+
 
 
 class SignInView(View):
