@@ -22,6 +22,8 @@ class SignUpView(View):
 		if sign_up_form.is_valid():
 			sign_up_form.save()
 
+			return redirect('accounts:sign-in')
+
 		context = {'sign_up_form': sign_up_form}
 		return render(request, 'accounts/sign_up.html', context)
 
@@ -43,11 +45,12 @@ class SignInView(View):
 			user = sign_in_form.login(request)
 			if user:
 				login(request, user)
-				return redirect('main')
+				return redirect('chat:thread-list')
     	
 		context = {'sign_in_form': sign_in_form}
 		return render(request, 'accounts/sign_in.html', context)
 
 
 def logout_view(request):
-	pass
+    logout(request)
+    return redirect('accounts:sign-in')

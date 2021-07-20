@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ thread_obj.thread_name }}</title>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <h1> {{ thread_obj.thread_name }}</h1>
+
+    {% if thread_messages %}
+        <ul id="chat_items">
+            {% for message in thread_messages %}
+                <li>
+                    <div id="message">
+                        <b> {{ message.user_id.username }}</b><br>
+                        <i> {{ message.timestamp }}</i><br>
+
+                        <p> {{ message.message }}</p>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %} 
+
+    <hr>
+
+    {% if request.user.is_authenticated %}
+    <form action="" method="POST" id='send_message_form'>
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>Send message</legend>
+            
+            <div>
+                <input type="checkbox" id="is_anonymous_message" name="is_anonymous_message" value="off">
+                <label for="is_anonymous_message">Send message as anonymous</label>
+            </div>
+
+            <textarea id="textarea_message" name="textarea_message" required minlength="1" rows="10" cols="150"></textarea><br><br>
+            <input type='submit' value="Send now">
+            <input type='submit' value="Send later">
+
+        </fieldset>
+    <form>
+
+    {% else %}
+        <p> To send messages you should authenticated -> <a href="% url 'accounts:sign-up' %}">Sign Up</a> | <a href="% url 'accounts:sign-in'%}">Sign In </a></p>
+
+    {% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+<script>
+var chat_items = $('#chat_items');
+
+// WebSockets
+const loc = window.location;
+
+var wsStart = 'ws://';
+if (loc == 'https:'){
+    wsStart = 'wss://'
+}
+
+var endpoint = wsStart + loc.host + loc.pathname;
+var socket = new ReconnectingWebSocket(endpoint);
+
+socket.onmessage = function(e){
+    var data = JSON.parse(e.data);
+    var username = data.current_user_username;
+    var timestamp = Date.parse(data.timestamp);
+    var message = data.message;
+
+    var msg_template = `
+        <li>
+            <div id="message">
+                <b>${username}</b><br>
+                <i>${timestamp}</i><br>
+
+                <p>${message}</p>
+            </div>
+        </li>
+    `;
+
+
+    chat_items.append(msg_template);
+}
+
+socket.onopen = function(e){
+    $(document).ready(function(){
+
+        $('#send_message_form').submit(function(event){
+            event.preventDefault();
+
+            var is_anonymous_message = false;
+            if ($('#is_anonymous_message').is(":checked"))
+            {
+                is_anonymous_message = true;
+            }
+
+            var message = $('#textarea_message').val();
+
+            var data = {
+                'current_thread_id': '{{ thread_obj.id }}',
+                'current_user_id': '{{ request.user.id }}',
+                'current_user_username':'{{ request.user.username }}',
+                'is_anonymous_message': is_anonymous_message,
+                'message':message
+            };
+
+            // Clears input field
+            $('#textarea_message').val("");
+
+            console.log('sended');
+            socket.send(JSON.stringify(data));
+
+        })        
+
+    });
+
+}
+
+socket.onerror = function(e){
+    console.log("error", e);
+}
+
+socket.onclose = function(e){
+    console.log("close connection", e);
+}
+    
+</script>
+</body>
+</html>
