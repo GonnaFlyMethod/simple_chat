@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'accounts/css/logout.css' %}">
+
+	<link rel="shortcut icon" type="image/jpg" href="https://icons-for-free.com/iconfiles/png/512/talk+icon-1320167913753487880.png"/>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+  	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+
+	<title>Discourse</title>
+</head>
+<body>
+
+<div id='main_text'>
+	<h1 class="mt-2">Logout</h1>
+	<p>You are logged out!</p>
+	<p>You will be rederected on the main page in 5 seconds...</p>
+	<div class="spinner-border text-dark" role="status">
+	<div class="loader"></div>
+  <span class="sr-only">Loading...</span>
+</div>
+</div>
+
+<script type="text/javascript">
+	
+
+	function redirect(){
+		let redirect_url = "{% url 'discourse:main' %}"
+		window.location.replace(redirect_url);
+	}
+
+	setTimeout(redirect, 5000)
+
+</script>
+</body>
+</html>
+

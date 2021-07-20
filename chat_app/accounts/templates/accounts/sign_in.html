@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Sign In</title>
+
+</head>
+<body>
+    <form method="POST" action="">
+        {% csrf_token %}
+        
+        {{sign_in_form.as_p}}
+
+        <input type="submit" value="Sign Up">
+    </form>
+
+    {% if sign_in_form.non_field_errors %}
+        <ul class='form-errors'>
+            {% for error in sign_in_form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+</body>
+</html>
