@@ -59,5 +59,5 @@ class ChatMessageListing(generics.ListAPIView):
 
 	def get_queryset(self):
 		thread_id = self.kwargs.get('thread_id')
-		chat_messages = ChatMessage.objects.filter(thread_id=thread_id)
+		chat_messages = ChatMessage.objects.filter(thread_id=thread_id).order_by('timestamp')
 		return chat_messages

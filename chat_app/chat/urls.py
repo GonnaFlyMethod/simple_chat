@@ -13,7 +13,7 @@ urlpatterns = [
 
 rest_api_urls = [
    re_path(r'^api/get-messages/(?P<thread_id>[0-9]+)/$',
-           views.ChatMessageListing.as_view()), 
+           views.ChatMessageListing.as_view(), name='thread-messages-api'), 
 ]
 
 

@@ -38,6 +38,7 @@ class ChatConsumer(AsyncConsumer):
 			current_user_username = ws_recieved_data['current_user_username']
 			is_anonymous_message = ws_recieved_data['is_anonymous_message']
 			chat_message = ws_recieved_data['message']
+			is_delay = ws_recieved_data['is_delay']
 
 			response = {
 				'message': chat_message,
@@ -60,12 +61,22 @@ class ChatConsumer(AsyncConsumer):
 
 			response['timestamp'] = chat_message_obj.timestamp.strftime('%d-%m-%Y %H:%M')
 
+			final_data_for_sending = {
+				'type': 'chat_message',
+				'text': json.dumps(response, cls=DjangoJSONEncoder)
+			}
+
+			if is_delay:
+				delay_time = ws_recieved_data['delay_time']
+				task = await send_delayed_message.apply_async(args=[
+					self.chat_room,
+					final_data_for_sending
+				], countdown=delay_time)
+				return task
+
 			await self.channel_layer.group_send(
 				self.chat_room,
-				{
-					'type': 'chat_message',
-					'text': json.dumps(response, cls=DjangoJSONEncoder)
-				}
+				final_data_for_sending
 			)
 
 	async def websocket_disconnect(self, event):
