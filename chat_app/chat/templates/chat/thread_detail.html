@@ -4,31 +4,41 @@
     <meta charset="utf-8">
     <title>{{ thread_obj.thread_name }}</title>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
 
 </head>
 <body>
     <h1> {{ thread_obj.thread_name }}</h1>
+    <a href="{% url 'chat:thread-list' %}">Back to the list of threads</a>
+    <hr>
 
-    {% if thread_messages %}
+    <div style="overflow-y: scroll; height:400px;" id="scrollarea">
         <ul id="chat_items">
-            {% for message in thread_messages %}
-                <li>
-                    <div id="message">
-                        <b> {{ message.user_id.username }}</b><br>
-                        <i> {{ message.timestamp }}</i><br>
+            {% if thread_messages %}
+                
+                    {% for message in thread_messages %}
+                        <li>
+                            <div id="message">
+                                {% if message.user_id.username %}
+                                    <b>{{ message.user_id.username }}</b>
+                                {% else %}
+                                    <b>Anonymous</b>
+                                {% endif %}
+                                <br>
+                                <i> {{ message.timestamp|date:'d-m-Y H:i' }}</i><br>
 
-                        <p> {{ message.message }}</p>
-                    </div>
-                </li>
-            {% endfor %}
+                                <p> {{ message.message }}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+            {% endif %}
         </ul>
-    {% endif %} 
+    </div>
 
     <hr>
 
     {% if request.user.is_authenticated %}
-    <form action="" method="POST" id='send_message_form'>
+    <form action="" method="POST" id='send_message_form' style="margin-bottom: 1rem;">
         {% csrf_token %}
 
         <fieldset>
@@ -39,7 +49,7 @@
                 <label for="is_anonymous_message">Send message as anonymous</label>
             </div>
 
-            <textarea id="textarea_message" name="textarea_message" required minlength="1" rows="10" cols="150"></textarea><br><br>
+            <textarea id="textarea_message" name="textarea_message" required minlength="1" rows="3" cols="211" style="resize: vertical;"></textarea><br><br>
             <input type='submit' value="Send now">
             <input type='submit' value="Send later">
 
@@ -47,13 +57,19 @@
     <form>
 
     {% else %}
-        <p> To send messages you should authenticated -> <a href="% url 'accounts:sign-up' %}">Sign Up</a> | <a href="% url 'accounts:sign-in'%}">Sign In </a></p>
+        <p> To send messages you should be authenticated -> <a href="{% url 'accounts:sign-up' %}">Sign Up</a> | <a href="{% url 'accounts:sign-in'%}">Sign In </a></p>
 
     {% endif %}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
 <script>
-var chat_items = $('#chat_items');
+function scrollToBottom(){
+    var objDiv = document.getElementById("scrollarea");
+    objDiv.scrollTop = objDiv.scrollHeight;
+}
+
+
+scrollToBottom();
 
 // WebSockets
 const loc = window.location;
@@ -68,8 +84,10 @@ var socket = new ReconnectingWebSocket(endpoint);
 
 socket.onmessage = function(e){
     var data = JSON.parse(e.data);
+
     var username = data.current_user_username;
-    var timestamp = Date.parse(data.timestamp);
+    //var timestamp = Date.parse(data.timestamp);
+    var timestamp = data.timestamp;
     var message = data.message;
 
     var msg_template = `
@@ -83,8 +101,9 @@ socket.onmessage = function(e){
         </li>
     `;
 
-
-    chat_items.append(msg_template);
+    $('#chat_items').append(msg_template);
+    
+    scrollToBottom();
 }
 
 socket.onopen = function(e){
@@ -93,10 +112,10 @@ socket.onopen = function(e){
         $('#send_message_form').submit(function(event){
             event.preventDefault();
 
-            var is_anonymous_message = false;
+            var is_anonymous_message = 'not_anonymous';
             if ($('#is_anonymous_message').is(":checked"))
             {
-                is_anonymous_message = true;
+                is_anonymous_message = 'anonymous';
             }
 
             var message = $('#textarea_message').val();
@@ -112,7 +131,6 @@ socket.onopen = function(e){
             // Clears input field
             $('#textarea_message').val("");
 
-            console.log('sended');
             socket.send(JSON.stringify(data));
 
         })        

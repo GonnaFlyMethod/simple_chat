@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.http import HttpResponseForbidden
 
@@ -15,6 +15,17 @@ class ThreadListView(View):
 
 		return render(request, 'chat/thread_list.html', context)
 
+	def post(self, request):
+		current_user = request.user
+		thread_name = request.POST.get('thread_name')
+
+		new_thread = Thread.objects.create(
+			creator=current_user,
+			thread_name=thread_name
+		)
+
+		return redirect('chat:thread-detail', thread_id=new_thread.id)
+
 
 class ThreadDetailView(View):
 
@@ -29,11 +40,3 @@ class ThreadDetailView(View):
 		}
 
 		return render(request, 'chat/thread_detail.html',context)
-
-	def post(self, request, thread_id):
-		if not request.user.is_authenticated:
-			return HttpResponseForbidden()
-
-		current_user_id = request.user.id
-		message = request.POST.get('message')
-		is_anonymous = request.POST.get('is_anonymous_message')

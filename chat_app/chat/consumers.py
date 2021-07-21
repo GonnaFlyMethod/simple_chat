@@ -2,6 +2,7 @@ import asyncio
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.dateparse import parse_datetime
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
@@ -42,12 +43,12 @@ class ChatConsumer(AsyncConsumer):
 				'message': chat_message,
 			}
 
-			if is_anonymous_message:
+			if is_anonymous_message == 'anonymous':
 				response['current_user_username'] = 'Anonymous'
-				user_obj: User = await self.get_user(current_user_id)
+				user_obj = None
 			else:
 				response['current_user_username'] = current_user_username
-				user_obj = None
+				user_obj: User = await self.get_user(current_user_id)
 
 			thread_obj: Thread = await self.get_thread(current_thread_id)
 			
@@ -57,7 +58,7 @@ class ChatConsumer(AsyncConsumer):
 				message=chat_message,
 			)
 
-			response['timestamp'] = chat_message_obj.timestamp
+			response['timestamp'] = chat_message_obj.timestamp.strftime('%d-%m-%Y %H:%M')
 
 			await self.channel_layer.group_send(
 				self.chat_room,
@@ -71,7 +72,7 @@ class ChatConsumer(AsyncConsumer):
 		print("disconnect", event)
 
 	async def chat_message(self, event):
-		print("sended")
+		print()
 		await self.send({
 			'type': 'websocket.send',
 			'text':event['text']
@@ -90,6 +91,7 @@ class ChatConsumer(AsyncConsumer):
 						  thread: Thread=None,
 		                  user: User=None,
 		                  message: str=None) -> ChatMessage:
+
 		if user:
 			obj = ChatMessage.objects.create(
 				thread_id=thread,

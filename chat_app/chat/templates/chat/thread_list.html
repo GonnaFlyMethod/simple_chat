@@ -2,10 +2,22 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Sign In</title>
+    <title>Threads</title>
 
 </head>
 <body>
+
+    {% if request.user.is_authenticated %}
+        <form action="" method="POST">
+            {% csrf_token %}
+            <label for="thread_name">Thread name: </label><br>
+            <input type="text" name="thread_name" id="thread_name">
+            <input type="submit" value="Create new thread">
+        </form>
+
+    <hr>
+    {% endif %}
+
     <h1> The list of threads: </h1>
 
     {% if thread_list%}
