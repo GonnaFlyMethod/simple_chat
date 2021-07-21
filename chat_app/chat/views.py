@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from django.http import HttpResponseForbidden
+from django.conf import settings
+
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
 
 from .models import Thread, ChatMessage
+from .serializers import ChatMessagesSerializer
 
 
 class ThreadListView(View):
@@ -40,3 +45,19 @@ class ThreadDetailView(View):
 		}
 
 		return render(request, 'chat/thread_detail.html',context)
+
+
+class ChatMessagesPagination(PageNumberPagination):
+    page_size = settings.REST_FRAMEWORK['PAGE_SIZE']
+
+
+class ChatMessageListing(generics.ListAPIView):
+	pagination_class = ChatMessagesPagination
+	serializer_class = ChatMessagesSerializer
+
+	http_method_names = ['get']
+
+	def get_queryset(self):
+		thread_id = self.kwargs.get('thread_id')
+		chat_messages = ChatMessage.objects.filter(thread_id=thread_id)
+		return chat_messages
