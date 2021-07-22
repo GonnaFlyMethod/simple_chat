@@ -11,21 +11,21 @@ These instructions will help you to get the copy of the project for development 
 ### Clone the project to your local machine
 
 ```
-git clone https://github.com/GonnaFlyMethod/simple_chat
+$ git clone https://github.com/GonnaFlyMethod/simple_chat
 ```
 
 ### Install poetry  
+Poetry is a new dependencies manager for python. It's simple and clever. To install poetry run:
 
 ```
-pip install poetry
+$ pip3 install poetry
 ```
 
-### Install all dependencies
-
-***Note:*** before that you need to get to the directory with the project, then you can write the command below: 
-
+### Activate poetry env
 ```
-poetry install
+$ source $HOME/.poetry/env
+$ cd simple_chat
+$ poetry shell
 ```
 
 ### Create .env file near the manage.py file 
@@ -39,15 +39,12 @@ DATABASE_URL=psql://test:test@127.0.0.1:5432/test
 STATIC_URL=/static/
 ```
 
-If you are using another DB for development then check the [documentation](https://django-environ.readthedocs.io/en/latest/) out for more information. 
 ### Create database
 
 ```
-sudo -u postgres psql
+$ sudo -u postgres psql
 ```
-
-Enter the password and then write:
-
+### Create DB:
 ```
 CREATE DATABASE test;
 ```
@@ -57,23 +54,37 @@ CREATE DATABASE test;
 ```
 CREATE USER test with encrypted password 'test';
 ```
-
 Done! We have created a new user with the name "test" and password "test".
+
+### Get Redis
+```
+$ sudo apt update
+$ sudo apt install redis-server
+```
+
+### Run redis server
+```
+$ sudo systemctl daemon-reload
+$ sudo systemctl start redis
+```
+
+### Run celery
+```
+$ celery -A core worker --loglevel=info
+```
 
 ### Make migrations
 
 ```
-python manage.py makemigrations 
+$ python3 manage.py migrate
 ```
 
-After this:
-
+### Create a superuser
 ```
-python manage.py migrate
+$ python3 manage.py createsuperuser
 ```
 
-### Create superuser
-
+### Run project
 ```
-python manage.py createsuperuser
+$ python3 manage.py runserver
 ```
