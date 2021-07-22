@@ -7,7 +7,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     {% load static %}
     <script src="{% static 'chat/js/helpers.js' %}"></script> 
 
@@ -34,20 +33,21 @@
             <legend>Send message</legend>
             
             <div>
-                <input type="checkbox" id="is_anonymous_message" name="is_anonymous_message" value="off">
                 <label for="is_anonymous_message">Send message as anonymous</label>
+                <input type="checkbox" id="is_anonymous_message" name="is_anonymous_message" value="off">
             </div>
 
-            <textarea id="textarea_message" name="textarea_message" required minlength="1" rows="3" cols="211" style="resize: vertical;"></textarea><br><br>
-            <input type='submit' value="Send now">
-            <input type='submit' value="Send later" ud='Send late'>
+            <textarea id="textarea_message" name="textarea_message" required minlength="1" rows="2" cols="211" style="resize: vertical;"></textarea><br><br>
 
-            <div id="delay_send_feature_block">
-
-            </div>
-
+            <label for="is_delay">Send message with delay</label>
+            <input type="text" placeholder="delay date e.g dd/mm/yyyy" id=delay_date>
+            <input type="text" placeholder="delay time e.g hours:minues" id=delay_time>
+            
+            <input type='submit' value="Send">
         </fieldset>
     <form>
+
+
 
     {% else %}
         <p> To send messages you should be authenticated -> <a href="{% url 'accounts:sign-up' %}">Sign Up</a> | <a href="{% url 'accounts:sign-in'%}">Sign In </a></p>
@@ -128,19 +128,6 @@ var next_page_url = null;
 
 })();
 
-
-// Delay sending feature
-
-$('Send late').click(function(event){
-    event.preventDefault();
-
-    window.scrollTo(0,document.body.scrollHeight);
-
-    $('delay_send_feature_block').append();
-})
-
-
-
 // WebSockets
 const loc = window.location;
 
@@ -154,6 +141,7 @@ var socket = new ReconnectingWebSocket(endpoint);
 
 socket.onmessage = function(e){
     var data = JSON.parse(e.data);
+    console.log(data);
 
     var username = data.current_user_username;
     //var timestamp = Date.parse(data.timestamp);
@@ -189,12 +177,24 @@ socket.onopen = function(e){
 
         var message = $('#textarea_message').val();
 
+        var is_delay = 'no_delay';
+        var delay_date = $('#delay_date').val();
+        var delay_time = $('#delay_time').val();
+
+        if (delay_date && delay_time)
+        {
+            is_delay = 'delay';
+        }
+
         var data = {
             'current_thread_id': '{{ thread_obj.id }}',
             'current_user_id': '{{ request.user.id }}',
             'current_user_username':'{{ request.user.username }}',
             'is_anonymous_message': is_anonymous_message,
-            'message':message
+            'message': message,
+            'is_delay': is_delay,
+            'delay_date': delay_date,
+            'delay_time': delay_time 
         };
 
         // Clears input field

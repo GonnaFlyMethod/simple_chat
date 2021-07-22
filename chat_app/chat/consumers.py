@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, date
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.dateparse import parse_datetime
@@ -10,6 +11,7 @@ from channels.consumer import AsyncConsumer
 from channels.db import database_sync_to_async
 
 from .models import Thread, ChatMessage
+from .tasks import send_delayed_message
 
 
 class ChatConsumer(AsyncConsumer):
@@ -52,27 +54,45 @@ class ChatConsumer(AsyncConsumer):
 				user_obj: User = await self.get_user(current_user_id)
 
 			thread_obj: Thread = await self.get_thread(current_thread_id)
-			
-			chat_message_obj = await self.save_chat_message(
+
+			if is_delay == 'delay':
+				delay_date = ws_recieved_data['delay_date']
+				delay_time = ws_recieved_data['delay_time']
+
+				delay, future_timestamp = await self.get_seconds_until_future_datetime_point(delay_date,
+					                                                       delay_time)
+				
+				response['timestamp'] = future_timestamp
+				final_data_for_sending = {
+					'type': 'chat_message',
+					'text': json.dumps(response, cls=DjangoJSONEncoder)
+				}
+
+				task = send_delayed_message.apply_async(args=[
+					self.chat_room,
+					final_data_for_sending,
+					{
+						'thread_obj': thread_obj,
+						'user_obj': user_obj,
+						'message': chat_message
+					}
+				], countdown=delay)
+
+				return task
+
+			current_momoment = datetime.now().strftime('%d-%m-%Y %H:%M')
+			response['timestamp'] = current_momoment
+
+			await self.save_chat_message_obj(
 				thread=thread_obj,
 				user=user_obj,
 				message=chat_message,
 			)
 
-			response['timestamp'] = chat_message_obj.timestamp.strftime('%d-%m-%Y %H:%M')
-
 			final_data_for_sending = {
 				'type': 'chat_message',
 				'text': json.dumps(response, cls=DjangoJSONEncoder)
 			}
-
-			if is_delay:
-				delay_time = ws_recieved_data['delay_time']
-				task = await send_delayed_message.apply_async(args=[
-					self.chat_room,
-					final_data_for_sending
-				], countdown=delay_time)
-				return task
 
 			await self.channel_layer.group_send(
 				self.chat_room,
@@ -83,7 +103,6 @@ class ChatConsumer(AsyncConsumer):
 		print("disconnect", event)
 
 	async def chat_message(self, event):
-		print()
 		await self.send({
 			'type': 'websocket.send',
 			'text':event['text']
@@ -98,10 +117,10 @@ class ChatConsumer(AsyncConsumer):
 		return User.objects.get(id=obj_id)
 
 	@database_sync_to_async
-	def save_chat_message(self,
-						  thread: Thread=None,
-		                  user: User=None,
-		                  message: str=None) -> ChatMessage:
+	def save_chat_message_obj(self,
+						  	  thread: Thread=None,
+		                  	  user: User=None,
+		                  	  message: str=None) -> ChatMessage:
 
 		if user:
 			obj = ChatMessage.objects.create(
@@ -116,3 +135,19 @@ class ChatConsumer(AsyncConsumer):
 			)
 
 		return obj
+
+	async def get_seconds_until_future_datetime_point(self, delay_date,
+		                                              delay_time):
+		d, m, y = map(int, delay_date.split('/'))
+		hours, minutes = map(int, delay_time.split(':'))
+
+		future_time_point = datetime(y, m, d, hours, minutes)
+		d_t_obj = datetime.now()
+		current_time_point = datetime(d_t_obj.year,
+									  d_t_obj.month,
+			                          d_t_obj.day,
+			                          d_t_obj.hour,
+			                          d_t_obj.minute)
+		difference = future_time_point - current_time_point
+		seconds_to_wait = difference.total_seconds()
+		return int(seconds_to_wait), future_time_point.strftime("%d-%m-%Y %H:%M")

@@ -43,6 +43,11 @@ async function insertMessagesFromPage(target, list_of_messages, status)
         {
             var msg_unit = list_of_messages[i];
             var username = msg_unit.username;
+
+            if (!username){
+                username = 'Anonymous'
+            }
+
             var timestamp = msg_unit.timestamp;
             var message = msg_unit.message;
 
@@ -66,6 +71,12 @@ async function insertMessagesFromPage(target, list_of_messages, status)
         {
             var msg_unit = list_of_messages[i];
             var username = msg_unit.username;
+
+
+            if (!username){
+                username = 'Anonymous';
+            }
+
             var timestamp = msg_unit.timestamp;
             var message = msg_unit.message;
 
