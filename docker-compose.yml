@@ -29,7 +29,7 @@ services:
       context: .
     command: celery -A app worker -l info
     volumes:
-      - ./app:/app
+      - ./app:/core
     env_file:
       - ./.env.dev
     depends_on:
