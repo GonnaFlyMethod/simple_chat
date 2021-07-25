@@ -86,7 +86,7 @@ $ sudo systemctl start redis
 $ celery -A core worker --loglevel=info
 ```
 
-### Make migrations
+### Migrate data to the DB
 
 ```
 $ python3 manage.py migrate
