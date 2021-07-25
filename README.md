@@ -28,6 +28,12 @@ $ cd simple_chat
 $ poetry shell
 ```
 
+### Install dependencies
+
+```
+$ poetry install
+```
+
 ### Create .env file near the manage.py file 
 
 ***Note:*** .env will be invisible, so make it visible and set the following values inside: 
@@ -55,6 +61,13 @@ CREATE DATABASE test;
 CREATE USER test with encrypted password 'test';
 ```
 Done! We have created a new user with the name "test" and password "test".
+
+### Grant DB user
+
+```
+GRANT ALL PRIVILEGES ON DATABASE test TO test;
+
+```
 
 ### Get Redis
 ```
