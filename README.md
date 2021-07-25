@@ -50,7 +50,7 @@ STATIC_URL=/static/
 ```
 $ sudo -u postgres psql
 ```
-### Create DB:
+then:
 ```
 CREATE DATABASE test;
 ```
