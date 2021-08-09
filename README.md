@@ -18,7 +18,7 @@ $ git clone https://github.com/GonnaFlyMethod/simple_chat
 Poetry is a new dependencies manager for python. It's simple and clever. To install poetry run:
 
 ```
-$ pip3 install poetry
+$ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
 ```
 
 ### Activate poetry env
